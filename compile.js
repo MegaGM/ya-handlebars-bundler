@@ -3,22 +3,54 @@
 // dependencies
 let path = require('path'),
 	colors = require('colors'),
-	exec = require('child_process').exec;
+	Promise = require('bluebird'),
+	fs = Promise.promisifyAll(require('fs')),
+	exec = Promise.promisify(require('child_process').exec, {
+		multiArgs: true
+	});
 
-// make some data to work with
-let file = process.argv[2];
+// declare some information to work with
+let file = {};
+file.path = process.argv[2];
+file.name = path.basename(file.path, '.hbs');
+file.type = file.name.match(/_helper/i) ? 'helper' : 'template';
+file.dest = path.join(file.path, '../../compiled', file.name + '.js');
+
+// TODO: add concatination and minification
+Promise.resolve(file)
+	.then(compile)
+	.then(wrap)
+	.then(rewrite);
 
 // general function for compiling a single Handlebars file when its changed
 function compile(file) {
-	let filename = path.basename(file, '.hbs');
-	exec(`handlebars ${file} -f ./compiled/${filename}.js`, function (err, stdout, stderr) {
-		// TODO: add concatination and minification
-		console.log(`Handlebars: ${filename} compiled`.cyan);
-		if (err) console.error(`Error: ${err}`);
-		if (stdout) console.log(`stdout: ${stdout}`);
-		if (stderr) console.error(`stderr: ${stderr}`);
-	});
+	return exec(`handlebars ${file.path} -f ./compiled/${file.name}.js`)
+		.spread((stdout, stderr) => {
+			console.info(`\nHandlebars compiled: ${file.path}`.cyan);
+			// if (stdout) console.info(`stdout: ${stdout}`);
+			// if (stderr) console.error(`stderr: ${stderr}`);
+			return file.dest;
+		})
+		.then(fs.readFileAsync)
+		.then(content => {
+			file.compiled = content.toString();
+		})
+		.thenReturn(file);
 }
 
-Promise.resolve(file)
-	.then(compile);
+function wrap(file) {
+	return fs.readFileAsync(path.join(__dirname, './wrapper'))
+		.then(wrapper => {
+			wrapper = wrapper.toString();
+			file.content = wrapper.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER/i, file.compiled);
+			console.log(`Handlebars wrapped: ${file.dest}`.cyan);
+		})
+		.thenReturn(file);
+}
+
+function concat(file) {}
+
+function rewrite(file) {
+	fs.writeFileAsync(file.dest, file.content)
+		.then(nothing => console.log(`Handlebars rewrited: ${file.dest}`.cyan));
+}

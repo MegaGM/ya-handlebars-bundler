@@ -1,0 +1,9 @@
+(function (root, factory) {
+	if (typeof module === 'object' && module.exports) {
+		module.exports = factory(require('handlebars'));
+	} else {
+		root.returnExports = factory(root.Handlebars);
+	}
+}(this, function (Handlebars) {
+	INJECT_HANDLEBARS_INTERNAL_WRAPPER
+}));

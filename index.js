@@ -1,18 +1,24 @@
 'use strict';
+let path = require('path');
+
 let Handlebars = require('handlebars');
-require('require-all')('./helpers');
-// require('./helpers/makeLink');
+// let helpers = path.join(__dirname, './helpers');
+// helpers = require('require-all')('helpers');
+//
+let templates = path.join(__dirname, './compiled');
+templates = require('require-all')('compiled');
 
-let path = require('path'),
-	applicationPartials = {
-		personal: require('./compiled/personal-related.js'),
-		apb: require('./compiled/apb-related.js'),
-		bns: require('./compiled/bns-related.js'),
-		gta: require('./compiled/gta-related.js')
-	};
+// console.log('Handlebars.template: ', Handlebars.template);
+// console.log('Handlebars.templates: ', Handlebars.templates);
 
-function getTemplatePath(game) {
-	return require(path.join(__dirname, './compiled/', game + '-related.js'));
-}
+let result = Handlebars.templates['first.hbs']({
+	okay: 'fine'
+});
+console.log(result);
 
-module.exports = applicationPartials;
+// let path = require('path'),
+// 	applicationPartials = {
+// 		personal: require('./compiled/personal-related.js'),
+// 	};
+//
+// module.exports = applicationPartials;
