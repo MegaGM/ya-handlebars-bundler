@@ -6,7 +6,8 @@
   "dependencies": {
     "bluebird": "^3.4.1",
     "colors": "^1.1.2",
-    "require-all": "^2.0.0"
+    "require-all": "^2.0.0",
+    "uglify-js": "^2.6.3"
   },
   "devDependencies": {},
   "scripts": {
