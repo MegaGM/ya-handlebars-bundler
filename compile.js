@@ -9,6 +9,13 @@ let path = require('path'),
 		multiArgs: true
 	});
 
+let wrapperP = new Promise((resolve, reject) => {
+	fs.readFileAsync(path.join(__dirname, './wrapper'))
+		.then(content => {
+			resolve(content.toString());
+		});
+});
+
 // declare some information to work with
 let file = {};
 file.path = process.argv[2];
@@ -24,25 +31,21 @@ Promise.resolve(file)
 
 // general function for compiling a single Handlebars file when its changed
 function compile(file) {
-	return exec(`handlebars ${file.path} -f ./compiled/${file.name}.js`)
+	return exec(`handlebars ${file.path}`)
 		.spread((stdout, stderr) => {
+			if (stderr) return console.error(`Handlebars compiler error: ${stderr}`);
 			console.info(`\nHandlebars compiled: ${file.path}`.cyan);
-			// if (stdout) console.info(`stdout: ${stdout}`);
-			// if (stderr) console.error(`stderr: ${stderr}`);
+			file.compiled = stdout;
 			return file.dest;
-		})
-		.then(fs.readFileAsync)
-		.then(content => {
-			file.compiled = content.toString();
 		})
 		.thenReturn(file);
 }
 
 function wrap(file) {
-	return fs.readFileAsync(path.join(__dirname, './wrapper'))
+	return wrapperP
 		.then(wrapper => {
-			wrapper = wrapper.toString();
-			file.content = wrapper.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER/i, file.compiled);
+			file.content = wrapper
+				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER/i, file.compiled);
 			console.log(`Handlebars wrapped: ${file.dest}`.cyan);
 		})
 		.thenReturn(file);
