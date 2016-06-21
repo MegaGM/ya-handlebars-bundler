@@ -31,12 +31,13 @@ else
 	file.prefix = '';
 
 
-// TODO: add concatination and minification
+// TODO: add minification
 Promise.resolve(file)
 	.then(compile)
 	.then(wrap)
-	.then(rewrite)
-	.then(concat);
+	.then(write)
+	.then(concat)
+	.then(writeBundle);
 
 // general function for compiling a single Handlebars file when its changed
 function compile(file) {
@@ -46,9 +47,12 @@ function compile(file) {
 			console.info(`\nHandlebars compiled: ${file.path}`.cyan);
 			file.compiled = stdout;
 		})
-		.thenReturn(file);
+		.thenReturn(file)
+		.catch(console.error);
 }
 
+// insert the compiled file inside a wrapper that makes it work smoothly in both CommonJS environment and in a browser
+// TODO: add AMD environment as well
 function wrap(file) {
 	return wrapperP
 		.then(wrapper => {
@@ -56,17 +60,22 @@ function wrap(file) {
 				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER/i, file.compiled);
 			console.log(`Handlebars wrapped: ${file.name}`.cyan);
 		})
-		.thenReturn(file);
+		.thenReturn(file)
+		.catch(console.error);
 }
 
-function rewrite(file) {
+// simply write the compiled and wrapped file into ./compiled directory
+function write(file) {
 	return fs.writeFileAsync(path.join(file.dest, file.prefix + file.name + '.js'), file.content)
-		.then(nothing => console.log(`Handlebars rewrited: ${file.dest}${file.name}`.cyan))
-		.thenReturn(file);
+		.then(nothing => console.log(`Handlebars writed: ${file.dest}${file.name}`.cyan))
+		.thenReturn(file)
+		.catch(console.error);
 }
 
+// concat all files in the ./compiled directory in the order: helpers, partials, templates
 function concat(file) {
-	let helpers = [],
+	let output = [],
+		helpers = [],
 		partials = [],
 		templates = [];
 
@@ -95,42 +104,33 @@ function concat(file) {
 			return [helpers, partials, templates];
 		})
 		.spread((helpers, partials, templates) => {
-			// console.log('helpers: ', helpers);
-			// console.log('partials: ', partials);
-			// console.log('templates: ', templates);
-			let output = [];
+			let reducer = (total, item) => {
+				return total + item.toString() + '\n';
+			};
 
-			Promise.reduce(helpers, (total, item) => {
-					return total + item.toString() + '\n';
-				}, '')
-				.then(item => {
-					output.push(item);
-				})
+			return Promise
+				.reduce(helpers, reducer, '')
+				.then(output.push.bind(output))
 				.thenReturn(partials)
-				.reduce((total, item) => {
-					return total + item.toString() + '\n';
-				}, '')
-				.then(item => {
-					output.push(item);
-				})
+				.reduce(reducer, '')
+				.then(output.push.bind(output))
 				.thenReturn(templates)
-				.reduce((total, item) => {
-					return total + item.toString() + '\n';
-				}, '')
-				.then(item => {
-					output.push(item);
-				})
-				.then(() => {
-					console.log('output: ', output);
-					let bundlePath = path.join(path.dirname(file.dest), 'bundle.js');
-					console.log('bundlePath', bundlePath);
-					fs.writeFileAsync(bundlePath, output.join('\n'))
-						.then(() => {
-							console.log(`Handlebars some files were concatenated:
-								${helpers.length} helpers, ${partials.length} partials and ${templates.length} templates`.cyan);
-						});
-				})
-				.catch(err => console.error('errara', err));
+				.reduce(reducer, '')
+				.then(output.push.bind(output))
+				.thenReturn(output)
+				.catch(console.error);
 		})
-		.catch(err => console.error('errara', err));
+		.catch(console.error);
+}
+
+function writeBundle(output) {
+	console.log('output: ', output);
+	let bundlePath = path.join(path.dirname(file.dest), 'bundle.js');
+	console.log('bundlePath', bundlePath);
+	fs.writeFileAsync(bundlePath, output.join('\n'))
+		.then(() => {
+			console.log(`Handlebars: bundle successfully created!`.cyan);
+		})
+		.thenReturn(output)
+		.catch(console.error);
 }
