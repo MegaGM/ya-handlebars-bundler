@@ -19,7 +19,8 @@ let wrapperP = new Promise((resolve, reject) => {
 // declare some information to work with
 let file = {};
 file.path = process.argv[2];
-file.name = path.basename(file.path, '.hbs');
+file.basename = path.basename(file.path);
+file.name = file.basename.substring(0, file.basename.lastIndexOf('.'));
 file.dest = path.join(file.path, '../../compiled');
 
 // compute prefix for the file
@@ -41,6 +42,15 @@ Promise.resolve(file)
 
 // general function for compiling a single Handlebars file when its changed
 function compile(file) {
+	if ('_helper_' === file.prefix) {
+		// pass compilation, just load the file since it's a raw js file
+		return fs.readFileAsync(file.path)
+			.then(content => {
+				file.compiled = content;
+			})
+			.thenReturn(file)
+			.catch(console.error);
+	}
 	return exec(`handlebars ${file.path}`)
 		.spread((stdout, stderr) => {
 			if (stderr) return console.error(`Handlebars compiler error: ${stderr}`);
@@ -58,7 +68,7 @@ function wrap(file) {
 		.then(wrapper => {
 			file.content = wrapper
 				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER/i, file.compiled);
-			console.log(`Handlebars wrapped: ${file.name}`.cyan);
+			console.log(`Handlebars wrapped: ${file.basename}`.cyan);
 		})
 		.thenReturn(file)
 		.catch(console.error);
@@ -67,7 +77,7 @@ function wrap(file) {
 // simply write the compiled and wrapped file into ./compiled directory
 function write(file) {
 	return fs.writeFileAsync(path.join(file.dest, file.prefix + file.name + '.js'), file.content)
-		.then(nothing => console.log(`Handlebars writed: ${file.dest}${file.name}`.cyan))
+		.then(nothing => console.log(`Handlebars writed: ${file.dest}${file.basename}`.cyan))
 		.thenReturn(file)
 		.catch(console.error);
 }
@@ -127,7 +137,7 @@ function writeBundle(output) {
 	console.log('output: ', output);
 	let bundlePath = path.join(path.dirname(file.dest), 'bundle.js');
 	console.log('bundlePath', bundlePath);
-	fs.writeFileAsync(bundlePath, output.join('\n'))
+	return fs.writeFileAsync(bundlePath, output.join('\n'))
 		.then(() => {
 			console.log(`Handlebars: bundle successfully created!`.cyan);
 		})
