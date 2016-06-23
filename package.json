@@ -1,7 +1,7 @@
 {
-	"name": "inject-handlebars",
+	"name": "handlebars-watcher",
 	"version": "0.0.1",
-	"description": "The simpliest automatic Handlebars builder",
+	"description": "Ultimate Handlebars builder",
 	"bin": {
 		"watch-handlebars": "./src/watch-handlebars"
 	},
