@@ -1,0 +1,3 @@
+(function () {
+	INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT
+})();

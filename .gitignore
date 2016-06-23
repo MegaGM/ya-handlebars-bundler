@@ -1,5 +1,5 @@
-# ignore produced concatenated file
-bundle.js
+compiled
+todo
 # Logs
 logs
 *.log

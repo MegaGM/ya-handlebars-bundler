@@ -1,0 +1,5 @@
+(function () {
+	var template = Handlebars.template,
+		partials = Handlebars.partials = Handlebars.partials || {};
+	partials['INJECT_HANDLEBARS_INTERNAL_WRAPPER_FILENAME'] = template(INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT);
+})();
