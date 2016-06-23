@@ -1,38 +1,35 @@
 {
-  "name": "inject-handlebars",
-  "version": "0.0.1",
-  "description": "The simpliest automatic Handlebars builder",
-  "bin": {
-    "hanwatch": "./src/watch-handlebars"
-  },
-  "preferGlobal": true,
-  "main": "./src/watch-handlebars",
-  "dependencies": {
-    "bluebird": "^3.4.1",
-    "chokidar": "^1.5.2",
-    "colors": "^1.1.2",
-    "fs-extra": "^0.30.0",
-    "mkdirp": "^0.5.1",
-    "require-all": "^2.0.0",
-    "uglify-js": "^2.6.3"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/MegaGM/inject-handlebars.git"
-  },
-  "keywords": [
-    "handlebars",
-    "builder",
-    "bundler"
-  ],
-  "author": "Mega <Aza.Noriega@gmail.com>",
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/MegaGM/inject-handlebars/issues"
-  },
-  "homepage": "https://github.com/MegaGM/inject-handlebars#readme"
+	"name": "inject-handlebars",
+	"version": "0.0.1",
+	"description": "The simpliest automatic Handlebars builder",
+	"bin": {
+		"watch-handlebars": "./src/watch-handlebars"
+	},
+	"preferGlobal": true,
+	"main": "./src/watch-handlebars",
+	"dependencies": {
+		"chokidar": "^1.5.2",
+		"colors": "^1.1.2",
+		"fs-extra": "^0.30.0",
+		"uglify-js": "^2.6.3"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/MegaGM/inject-handlebars.git"
+	},
+	"keywords": [
+		"handlebars",
+		"builder",
+		"bundler"
+	],
+	"author": "Mega <Aza.Noriega@gmail.com>",
+	"license": "Apache-2.0",
+	"bugs": {
+		"url": "https://github.com/MegaGM/inject-handlebars/issues"
+	},
+	"homepage": "https://github.com/MegaGM/inject-handlebars#readme"
 }

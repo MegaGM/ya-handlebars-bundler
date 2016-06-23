@@ -2,11 +2,6 @@
 
 'use strict';
 
-// FIXME: namespace bug
-// ./raw/partials/part.hbs and
-// ./raw/partials/nested/part.hbs
-// will be saved as one file ./compiled/partials/part.hbs
-
 /* ================================================
  * Startup dependencies
  * ===============================================*/
@@ -107,12 +102,10 @@ let watcherDirs = [
 let watcher = chokidar.watch(watcherDirs, watcherOptions);
 
 // add files on startup
-// let start = Date.now();
 watcher.on('add', filepath => {
 	if (filepath === config.path) return;
 
 	let file = hash.add(filepath);
-	// console.log('hash updated for', Date.now() - start);
 	if (!file)
 		return console.error(config.app.prefix, 'Something went wrong while adding: '.red, filepath);
 
@@ -126,9 +119,7 @@ watcher.on('ready', () => {
 	console.info('\n' + config.app.prefix, 'monitoring is active! ^_^');
 
 	// concat entire hash, minify, write to disk
-	// console.log('ready', Date.now() - start);
 	hash.updateBundle();
-	// console.log('bundle updated for', Date.now() - start);
 
 	watcher.on('change', filepath => {
 		if (filepath === config.path)
