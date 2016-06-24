@@ -1,6 +1,8 @@
 # Handlebars bundler
 Ya, yet another, because why not?  
-Actually I'm not the one who likes to reinvent the wheel, but in this particular case the game worth the candle. I'm using Handlebars a lot in many applications. Despite of existence of numerous packing tools like Gulp, Grunt, Wepback, etc, I always wanted a truly simple yet powerfull tool, that would allow me to include Handlebars in any application, without any changes to the application structure, with just a couple of terminal commands. Just plug Handlebars in, nothing less nothing more. That's why the bundler was created. And I'm proud of it, because it does its job like a charm.
+Actually I'm not the one who likes to reinvent the wheel, but in this particular case the game worth the candle.  
+I always wanted a truly simple yet powerfull tool, that would allow me to include Handlebars in any application. Without any changes to the application structure. With just a couple of terminal commands.  
+Just roll Handlebars in, nothing less nothing more. That's why the bundler was created. And I'm proud of it, because it does its job like a charm.
 
 ## It can:
 - **watch** for various file/folder changes
