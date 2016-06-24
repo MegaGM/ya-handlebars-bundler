@@ -1,6 +1,6 @@
 {
   "name": "ya-handlebars-bundler",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Yet Another Handlebars bundler. Read below why it's better",
   "bin": {
     "handlebars-watch": "./src/watch",
