@@ -110,7 +110,7 @@ watcher.on('add', filepath => {
 
 	let file = hash.add(filepath);
 	if (!file)
-		return console.error(config.app.prefix, 'Something went wrong while adding: '.red, filepath);
+		return console.error(config.app.prefix, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors in it!');
 
 	console.info(config.app.prefix, 'added', path.join(file.relativeDir, file.base));
 	if (config.app.isReady)

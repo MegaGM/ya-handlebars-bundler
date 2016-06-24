@@ -73,10 +73,19 @@ module.exports = class Hash {
 
 		// store
 		this[file.type][path.join(file.relativeDir, file.base)] = file;
+		let output;
+		try {
+			output = config.minify ? this._compress(file.compiled) : file.compiled;
+		} catch (err) {
+			let message = config.app.prefix + ' JS_Parse_Error in file: ' + path.join(file.relativeDir, file.base) + '\n' + err.message;
+			console.error(message);
+			return false;
+		}
+
 		writeFile(file.storepath, this._wrap({
 			file: file,
 			wrapper: this.wrappers.standalone,
-			content: config.minify ? this._compress(file.compiled) : file.compiled
+			content: output
 		}));
 
 		return file;
@@ -103,7 +112,13 @@ module.exports = class Hash {
 			wrapper: this.wrappers.standalone,
 			content: output
 		});
-		this._writeBundle(config.minify ? this._compress(output) : output);
+
+		try {
+			output = config.minify ? this._compress(file.compiled) : file.compiled;
+		} catch (err) {
+			return false;
+		}
+		this._writeBundle(output);
 	}
 
 	_wrap(options) {
@@ -117,9 +132,16 @@ module.exports = class Hash {
 		// output = output
 		// 	.replace(/'/gi, '\'')
 		// 	.replace(/"/gi, '\"');
-		return uglify.minify(output, {
-			fromString: true
-		}).code;
+		try {
+			return uglify.minify(output, {
+				fromString: true
+			}).code;
+		} catch (err) {
+			let error = new Error('JS_Parse_Error');
+			error.code = 'JS_Parse_Error';
+			error.message = err.message
+			throw error;
+		}
 	}
 
 	_writeBundle(output) {
