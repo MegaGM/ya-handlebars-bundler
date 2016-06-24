@@ -43,6 +43,7 @@ try {
 	if (!config.compiled) config.compiled = 'compiled';
 	if (!config.bundle) config.bundle = 'compiled';
 	if (!config.bundleFilename) config.bundleFilename = 'bundle';
+	if (void 0 === config.minify) config.minify = true;
 
 	// resolve abs paths
 	config.raw = join(cwd, config.raw);
@@ -51,7 +52,7 @@ try {
 
 	// check bundleFilename
 	if ('.js' !== config.bundleFilename.substr(-3)) {
-		let filename = config.bundleFilename + config.minify ? '.min' : '' + '.js';
+		let filename = config.bundleFilename + (config.minify ? '.min' : '') + '.js';
 		config.bundleFilename = filename;
 	}
 	if (-1 !== config.bundleFilename.indexOf('/'))
