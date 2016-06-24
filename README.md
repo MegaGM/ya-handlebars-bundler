@@ -2,7 +2,7 @@
 Ya, yet another, because why not?  
 Actually I'm not the one who likes to reinvent the wheel, but in this particular case the game worth the candle.  
 I always wanted a truly simple yet powerfull tool, that would allow me to include Handlebars in any application. Without any changes to the application structure. With just a couple of terminal commands.  
-Just roll Handlebars in, nothing less nothing more. That's why the bundler was created. And I'm proud of it, because it does its job like a charm.
+Just plug Handlebars in, nothing less nothing more. That's why the bundler was created. And I'm proud of it, because it does its job like a charm.
 
 ## It can:
 - **watch** for various file/folder changes
@@ -50,14 +50,14 @@ module.exports = {
 ```
 You can see more information about configuration options below at [Options](#options)
 
-With this particular config **The bundler will:**
+With this particular config **the bundler will:**
 - **watch** over  
-`/www/myapp/raw/templates`,  
-`/www/myapp/raw/partials` and  
+`/www/myapp/raw/templates`  
+`/www/myapp/raw/partials`  
 `/www/myapp/raw/helpers`
 - **compile**, **wrap**, **mangle** and **minify** individual files into  
-`/www/myapp/compiled/templates`,  
-`/www/myapp/compiled/partials` and  
+`/www/myapp/compiled/templates`  
+`/www/myapp/compiled/partials`  
 `/www/myapp/compiled/helpers`
 - **bundle** all the stuff into  
 `/www/myapp/compiled/bundle.min.js`
@@ -66,7 +66,7 @@ All the output files will be ready to use in the all claimed environments.
 
 
 ## Usage of the output files
-1. Include `Handlebars` or `handlebars.runtime` library in your application
+1. Include `Handlebars` or `Handlebars.runtime` library in your application
 2. Include a compiled template, patrial or a helper, or just a single bundle file instead
 3. That's it!
 
@@ -86,24 +86,26 @@ then in `anyfile.js`
 let Handlebars = require('handlebars');
 require('./compiled/bundle.min.js'); // or without .js or without .min.js
 
+let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
 /* ================================================
  * Use templates as usual in Handlebars
  * ===============================================*/
-let html = Handlebars.templates.kittens({name: 'Meowsie', color: 'white', says: 'meow!'});
+let html = Handlebars.templates.kittens(data);
 // or
-let html = Handlebars.templates['kittens']({name: 'Meowsie', color: 'white', says: 'meow!'});
+let html = Handlebars.templates['kittens'](data);
 ```
 
 ##### RequireJS
 ```js
 // Runtime build will be enough, you don't really need the full Handlebars anymore
-require(['handlebars.amd.min.js', './compiled/bundle.min'], function (Handlebars) {
+require(['handlebars.runtime.amd.min.js', './compiled/bundle.min'], function (Handlebars) {
+	let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
 	/* ================================================
 	 * Use templates as usual in Handlebars
 	 * ===============================================*/
-	var html = Handlebars.templates.kittens({name: 'Meowsie', color: 'white', says: 'meow!'});
+	var html = Handlebars.templates.kittens(data);
 	// or
-	var html = Handlebars.templates['kittens']({name: 'Meowsie', color: 'white', says: 'meow!'});
+	var html = Handlebars.templates['kittens'](data);
 });
 ```
 
@@ -113,17 +115,15 @@ require(['handlebars.amd.min.js', './compiled/bundle.min'], function (Handlebars
 <script src="handlebars.runtime-v4.0.5.js"></script>
 <script src="compiled/bundle.min.js"></script>
 <script>
+	let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
 	/* ================================================
 	 * Use templates as usual in Handlebars
 	 * ===============================================*/
-	var html = Handlebars.templates.kittens({name: 'Meowsie', color: 'white', says: 'meow!'});
+	var html = Handlebars.templates.kittens(data);
 	// or
-	var html = Handlebars.templates['kittens']({name: 'Meowsie', color: 'white', says: 'meow!'});
+	var html = Handlebars.templates['kittens'](data);
 </script>
 ```
-
-https://cdnjs.com/libraries/handlebars.js
-you can find runtime build in this repo `./lib/handlebars.runtime-v4.0.5.js`
 
 
 ## TODO
