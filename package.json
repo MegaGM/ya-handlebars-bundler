@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MegaGM/inject-handlebars.git"
+    "url": "git+https://github.com/MegaGM/ya-handlebars-bundler.git"
   },
   "keywords": [
     "handlebars",
@@ -31,7 +31,7 @@
   "author": "Mega <Aza.Noriega@gmail.com>",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/MegaGM/inject-handlebars/issues"
+    "url": "https://github.com/MegaGM/ya-handlebars-bundler/issues"
   },
-  "homepage": "https://github.com/MegaGM/inject-handlebars#readme"
+  "homepage": "https://github.com/MegaGM/ya-handlebars-bundler#readme"
 }
