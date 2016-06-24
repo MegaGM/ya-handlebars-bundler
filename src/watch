@@ -22,7 +22,7 @@ try {
 } catch (err) {
 	if ('MODULE_NOT_FOUND' === err.code) {
 
-		return console.error(appPrefix, 'There is no'.red, config.app.name, 'in this directory!'.red);
+		return console.error(appPrefix, 'There is no', 'handlebars.config.js', 'in this directory!');
 	}
 	return console.error('Unhandled exception O_o'.red, err);
 }
