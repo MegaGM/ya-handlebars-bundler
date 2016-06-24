@@ -3,7 +3,8 @@
 	"version": "1.0.0",
 	"description": "Yet Another Handlebars bundler. Read below why it's better",
 	"bin": {
-		"watch-handlebars": "./src/watch-handlebars"
+		"handlebars-watch": "./src/watch",
+		"watch-handlebars": "./src/watch"
 	},
 	"preferGlobal": true,
 	"main": "./src/watch-handlebars",

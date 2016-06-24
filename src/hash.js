@@ -100,7 +100,7 @@ module.exports = class Hash {
 			wrapper: this.wrappers.standalone,
 			content: this.concat()
 		});
-		this._writeBundle(this._compress(output));
+		this._writeBundle(config.minify ? this._compress(output) : output);
 	}
 
 	_wrap(options) {
@@ -148,7 +148,8 @@ module.exports = class Hash {
 		if (!this._filepathCheck(file)) return false;
 
 		file.relativeDir = file.dir.substring(file.dir.lastIndexOf(config.raw) + config.raw.length + 1);
-		file.storepath = join(config.compiled, file.relativeDir, file.name + '.js');
+		let filename = file.name + config.minify ? '.min' : '' + '.js';
+		file.storepath = join(config.compiled, file.relativeDir, filename);
 		file.type = file.relativeDir.match(/helpers/i) ?
 			'helpers' : file.relativeDir.match(/partials/i) ?
 			'partials' : 'templates';

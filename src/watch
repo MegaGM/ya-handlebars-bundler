@@ -41,8 +41,8 @@ try {
 	// check if something is not present in the config
 	if (!config.raw) config.raw = 'raw';
 	if (!config.compiled) config.compiled = 'compiled';
-	if (!config.bundle) config.bundle = '.';
-	if (!config.bundleFilename) config.bundleFilename = 'bundle.js';
+	if (!config.bundle) config.bundle = 'compiled';
+	if (!config.bundleFilename) config.bundleFilename = 'bundle';
 
 	// resolve abs paths
 	config.raw = join(cwd, config.raw);
@@ -50,8 +50,10 @@ try {
 	config.bundle = join(cwd, config.bundle);
 
 	// check bundleFilename
-	if ('.js' !== config.bundleFilename.substr(-3))
-		config.bundleFilename = config.bundleFilename + '.js';
+	if ('.js' !== config.bundleFilename.substr(-3)) {
+		let filename = config.bundleFilename + config.minify ? '.min' : '' + '.js';
+		config.bundleFilename = filename;
+	}
 	if (-1 !== config.bundleFilename.indexOf('/'))
 		console.error(config.app.prefix, 'option bundleFilename MUST to be a valid filename, not filepath. But you specified:', config.bundleFilename,
 			`\nYou can specify bundle filepath in ${config.name} file`,
