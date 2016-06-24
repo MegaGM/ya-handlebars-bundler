@@ -96,9 +96,12 @@ module.exports = class Hash {
 	}
 
 	updateBundle() {
-		let output = this._wrap({
+		let output = this.concat();
+		if (!output) return;
+
+		output = this._wrap({
 			wrapper: this.wrappers.standalone,
-			content: this.concat()
+			content: output
 		});
 		this._writeBundle(config.minify ? this._compress(output) : output);
 	}
@@ -131,7 +134,8 @@ module.exports = class Hash {
 		let templates = Object.keys(this.templates)
 			.map(key => this.templates[key].compiled);
 
-		return helpers.join('\n') + partials.join('\n') + templates.join('\n');
+		let output = helpers.join('\n') + partials.join('\n') + templates.join('\n');
+		return output.length ? output : false;
 	}
 
 	_filepathCheck(file) {
@@ -148,7 +152,7 @@ module.exports = class Hash {
 		if (!this._filepathCheck(file)) return false;
 
 		file.relativeDir = file.dir.substring(file.dir.lastIndexOf(config.raw) + config.raw.length + 1);
-		let filename = file.name + config.minify ? '.min' : '' + '.js';
+		let filename = file.name + (config.minify ? '.min' : '') + '.js';
 		file.storepath = join(config.compiled, file.relativeDir, filename);
 		file.type = file.relativeDir.match(/helpers/i) ?
 			'helpers' : file.relativeDir.match(/partials/i) ?
