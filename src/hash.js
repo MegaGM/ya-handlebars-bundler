@@ -10,7 +10,7 @@ let cwd = process.cwd(),
 try {
 	Handlebars = require(join(cwd, 'node_modules/handlebars'));
 } catch (err) {
-	if ('MODULE_NOT_FOUND' === err)
+	if ('MODULE_NOT_FOUND' === err.code)
 		Handlebars = require.main.require('handlebars');
 	else throw err;
 }
