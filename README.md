@@ -10,24 +10,22 @@ Actually I'm not the one who likes to reinvent the wheel, but in this particular
 - **bundle** all the stuff into a single file
 
 Out of the box you'll be able to use all the produced files (individually or as a bundle) in various environments:
-- **CommonJS** (Node.js, Browserify, Webpack etc)
-- **AMD** (RequireJS)
-- Generic **browsers** without any custom loaders
+- **CommonJS**: Node.js, Browserify, Webpack etc
+- **AMD**: RequireJS
+- **Browsers** without any custom loaders
 
 ## Installation
 `npm install -g ya-handlebars-bundler`  
 
-There is no external dependencies for the bundler itself. However, in order to make the produced templates, partials and helpers to work, the `Handlebars` library should be included somehow in your application. You already have it, right? If for some reason you still don't have it yet, read [Usage of the output files](#Usage of the output files) below.
+There is no external dependencies for the bundler itself. However, in order to make the produced files to work, the `Handlebars` library should be included somehow in your application. You already have it, right? If for some reason you still don't have it yet, read [Usage of the output files](#usage-of-the-output-files) below.
 
-## Usage
+## Bundler usage
 *Let's assume your application is in: `/www/myapp`*
 
 ```sh
 cd /www/myapp
-touch handlebars.config.js
-# fill the config with some values, then
-watch-handlebars
-# or `handlebars-watch`, it's just an alias.
+touch handlebars.config.js # fill the config with some values, then
+watch-handlebars # or `handlebars-watch`, it's just an alias.
 ```
 
 
@@ -48,33 +46,42 @@ module.exports = {
     minify: true // => `.min` suffix will be added to the files
 };
 ```
-You can see more information about configuration values below.
+You can see more information about configuration options below at [Options](#options)
 
-With this particular settings **The bundler will:**
-- **watch** over `/www/myapp/raw/templates`, `/www/myapp/raw/partials` and `/www/myapp/raw/helpers`
-- **compile**, **wrap**, **mangle** and **minify** individual files into `/www/myapp/compiled/templates`, `/www/myapp/compiled/partials` and `/www/myapp/compiled/helpers`
-- **bundle** all the stuff into `/www/myapp/compiled/bundle.min.js`
+With this particular config **The bundler will:**
+- **watch** over  
+`/www/myapp/raw/templates`,  
+`/www/myapp/raw/partials` and  
+`/www/myapp/raw/helpers`
+- **compile**, **wrap**, **mangle** and **minify** individual files into  
+`/www/myapp/compiled/templates`,  
+`/www/myapp/compiled/partials` and  
+`/www/myapp/compiled/helpers`
+- **bundle** all the stuff into  
+`/www/myapp/compiled/bundle.min.js`
 
 All the output files will be ready to use in the all claimed environments.
 
 
 ## Usage of the output files
-1. Include `Handlebars` library in your application
+1. Include `Handlebars` or `handlebars.runtime` library in your application
 2. Include a compiled template, patrial or a helper, or just a single bundle file instead
 3. That's it!
 
-**Some examples**:
-##### Node.js
-`$ npm install --save handlebars`  
-then in `myapp.js`
+You can easily find and download latest Handlebars builds at [cdnjs](https://cdnjs.com/libraries/handlebars.js)
+#### Examples:
 ```js
-let Handlebars = require('handlebars');
-
 /* ================================================
  * Of course you can require individual compiled files, but that's tedious.
  * It's much simplier to include the whole bundle.
- * All templates, partials and helpers will be awailable right away
+ * All the templates, partials and helpers will be awailable right away
  * ===============================================*/
+```
+##### Node.js
+`$ npm install --save handlebars`  
+then in `anyfile.js`
+```js
+let Handlebars = require('handlebars');
 require('./compiled/bundle.min.js'); // or without .js or without .min.js
 
 /* ================================================
@@ -87,12 +94,8 @@ let html = Handlebars.templates['kittens']({name: 'Meowsie', color: 'white', say
 
 ##### RequireJS
 ```js
-/* ================================================
- * Of course you can require individual compiled files, but that's tedious.
- * It's much simplier to include the whole bundle.
- * All templates, partials and helpers will be awailable right away
- * ===============================================*/
-require(['handlebars', './compiled/bundle.min'], function (Handlebars) {
+// Runtime build will be enough, you don't really need the full Handlebars anymore
+require(['handlebars.amd.min.js', './compiled/bundle.min'], function (Handlebars) {
 	/* ================================================
 	 * Use templates as usual in Handlebars
 	 * ===============================================*/
@@ -104,15 +107,8 @@ require(['handlebars', './compiled/bundle.min'], function (Handlebars) {
 
 ##### Browsers
 ```html
-<!-- Runtime build will be enough, you don't really need the full Handlebars -->
+<!-- Runtime build will be enough, you don't really need the full Handlebars anymore -->
 <script src="handlebars.runtime-v4.0.5.js"></script>
-<!--
-/* ================================================
- * Of course you can require individual compiled files, but that's tedious.
- * It's much simplier to include the whole bundle.
- * All templates, partials and helpers will be awailable right away
- * ===============================================*/
- -->
 <script src="compiled/bundle.min.js"></script>
 <script>
 	/* ================================================
@@ -124,7 +120,7 @@ require(['handlebars', './compiled/bundle.min'], function (Handlebars) {
 </script>
 ```
 
-https://cdnjs.com/libraries/handlebars.js/
+https://cdnjs.com/libraries/handlebars.js
 you can find runtime build in this repo `./lib/handlebars.runtime-v4.0.5.js`
 
 
