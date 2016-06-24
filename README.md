@@ -13,7 +13,7 @@ Just plug Handlebars in, nothing less nothing more. That's why the bundler was c
 
 Out of the box you'll be able to use all the produced files (individually or as a bundle) in various environments:
 - **CommonJS**: Node.js, Browserify, Webpack etc
-- **AMD**: RequireJS
+- **AMD**: RequireJS, Dojo Toolkit, ScriptManJS, Browserify, Webpack etc
 - **Browsers** without any custom loaders
 
 ## Installation
