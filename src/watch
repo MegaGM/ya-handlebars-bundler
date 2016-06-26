@@ -112,7 +112,7 @@ watcher.on('add', filepath => {
 
 	let file = hash.add(filepath);
 	if (!file)
-		return console.error(config.app.prefix, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors in it!');
+		return console.error(config.app.prefix, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors!');
 
 	console.info(config.app.prefix, 'added', path.join(file.relativeDir, file.base));
 	if (config.app.isReady)
@@ -132,7 +132,7 @@ watcher.on('ready', () => {
 
 		let file = hash.update(filepath);
 		if (!file)
-			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors in it!');
+			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors!');
 
 		console.info(config.app.prefix, 'updated'.cyan, path.join(file.relativeDir, file.base));
 		hash.updateBundle();
