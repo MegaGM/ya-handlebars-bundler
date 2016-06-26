@@ -73,20 +73,21 @@ module.exports = class Hash {
 
 		// store
 		this[file.type][path.join(file.relativeDir, file.base)] = file;
-		let output;
+		let output = this._wrap({
+			file: file,
+			wrapper: this.wrappers.standalone,
+			content: file.compiled
+		});
+
 		try {
-			output = config.minify ? this._compress(file.compiled) : file.compiled;
+			output = config.minify ? this._compress(output) : output;
 		} catch (err) {
 			let message = config.app.prefix + ' JS_Parse_Error in file: ' + path.join(file.relativeDir, file.base) + '\n' + err.message;
 			console.error(message);
 			return false;
 		}
 
-		writeFile(file.storepath, this._wrap({
-			file: file,
-			wrapper: this.wrappers.standalone,
-			content: output
-		}));
+		writeFile(file.storepath, output);
 
 		return file;
 	}
@@ -99,7 +100,7 @@ module.exports = class Hash {
 		let file = this._getFileinfo(filepath);
 		if (!file) return false;
 		delete this[file.type][path.join(file.relativeDir, file.base)];
-		// TODO: remove from disk
+		// remove from disk
 		removeFile(file.storepath);
 		return file;
 	}
@@ -114,18 +115,23 @@ module.exports = class Hash {
 		});
 
 		try {
-			output = config.minify ? this._compress(file.compiled) : file.compiled;
+			output = config.minify ? this._compress(output) : output;
 		} catch (err) {
 			return false;
 		}
-		this._writeBundle(output);
+
+		writeFile(join(config.bundle, config.bundleFilename), output);
 	}
 
 	_wrap(options) {
-		options.file = options.file || {};
-		return options.wrapper
-			.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_FILENAME/i, options.file.name || '')
-			.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
+		if (!options.file) {
+			return options.wrapper
+				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
+		} else {
+			return options.wrapper
+				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_FILENAME/i, options.file.registerName || '')
+				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
+		}
 	}
 
 	_compress(output) {
@@ -134,18 +140,16 @@ module.exports = class Hash {
 		// 	.replace(/"/gi, '\"');
 		try {
 			return uglify.minify(output, {
-				fromString: true
-			}).code;
+					fromString: true
+				})
+				.code
+				.replace(/(\\t){2,}/gi, '');
 		} catch (err) {
 			let error = new Error('JS_Parse_Error');
 			error.code = 'JS_Parse_Error';
 			error.message = err.message
 			throw error;
 		}
-	}
-
-	_writeBundle(output) {
-		writeFile(join(config.bundle, config.bundleFilename), output);
 	}
 
 	concat() {
@@ -179,6 +183,7 @@ module.exports = class Hash {
 		file.type = file.relativeDir.match(/helpers/i) ?
 			'helpers' : file.relativeDir.match(/partials/i) ?
 			'partials' : 'templates';
+		file.registerName = path.join(file.relativeDir.replace(/templates\/|partials\/|helpers\//i, ''), file.name);
 		return file;
 	}
 

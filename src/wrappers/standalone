@@ -2,7 +2,7 @@
 	if (typeof define === 'function' && define.amd) {
 		define(['handlebars'], factory);
 	} else if (typeof module === 'object' && module.exports) {
-		module.exports = factory(require.main.require('handlebars') || require('handlebars'));
+		module.exports = factory(require.main.require('handlebars'));
 	} else {
 		root.returnExports = factory(root.Handlebars);
 	}
