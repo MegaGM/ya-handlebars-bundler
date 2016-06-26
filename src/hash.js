@@ -62,8 +62,14 @@ module.exports = class Hash {
 		file.content = readFile(filepath);
 
 		// compile
-		file.precompiled = 'helpers' === file.type ?
-			file.content : Handlebars.precompile(file.content);
+		try {
+			file.precompiled = 'helpers' === file.type ?
+				file.content : Handlebars.precompile(file.content);
+		} catch (err) {
+			let message = config.app.prefix + ' Handlebars_Parse_Error in file: ' + path.join(file.relativeDir, file.base) + '\n' + err.message;
+			console.error(message);
+			return false;
+		}
 
 		file.compiled = this._wrap({
 			file: file,
@@ -124,14 +130,10 @@ module.exports = class Hash {
 	}
 
 	_wrap(options) {
-		if (!options.file) {
-			return options.wrapper
-				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
-		} else {
-			return options.wrapper
-				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_FILENAME/i, options.file.registerName || '')
-				.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
-		}
+		options.file = options.file || {};
+		return options.wrapper
+			.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_FILENAME/i, options.file.registerName || '')
+			.replace(/INJECT_HANDLEBARS_INTERNAL_WRAPPER_CONTENT/i, options.content);
 	}
 
 	_compress(output) {

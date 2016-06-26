@@ -45,6 +45,7 @@ try {
 	if (!config.bundle) config.bundle = 'compiled';
 	if (!config.bundleFilename) config.bundleFilename = 'bundle';
 	if (void 0 === config.minify) config.minify = true;
+	if (!config.requirejsHandlebars) config.requirejsHandlebars = 'handlebars';
 
 	// resolve abs paths
 	config.raw = join(cwd, config.raw);
@@ -131,7 +132,7 @@ watcher.on('ready', () => {
 
 		let file = hash.update(filepath);
 		if (!file)
-			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath);
+			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors in it!');
 
 		console.info(config.app.prefix, 'updated'.cyan, path.join(file.relativeDir, file.base));
 		hash.updateBundle();
@@ -143,7 +144,7 @@ watcher.on('ready', () => {
 
 		let file = hash.remove(filepath);
 		if (!file)
-			return console.error(config.app.prefix, 'Something went wrong while removing: '.red, filepath);
+			return console.error(config.app.prefix, 'Something went wrong while removing: '.red, filepath, '\nThe file has not been removed due some errors!');
 
 		console.info(config.app.prefix, 'removed'.red, path.join(file.relativeDir, file.base));
 		hash.updateBundle();
