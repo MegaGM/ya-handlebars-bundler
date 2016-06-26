@@ -11,6 +11,7 @@ let cwd = process.cwd(),
 	colors = require('colors'),
 	path = require('path'),
 	join = path.resolve,
+	packagejson = require(join(__dirname, '../package.json')),
 	appPrefix = 'Handlebars Builder:'.yellow;
 
 /* ================================================
@@ -119,7 +120,7 @@ watcher.on('add', filepath => {
 
 watcher.on('ready', () => {
 	config.app.isReady = true;
-	console.info('\n' + config.app.prefix, 'monitoring is active! ^_^');
+	console.info('\n' + config.app.prefix, 'v.'.yellow + packagejson.version.yellow, 'monitoring is active! ^_^');
 
 	// concat entire hash, minify, write to disk
 	hash.updateBundle();
@@ -132,7 +133,7 @@ watcher.on('ready', () => {
 		if (!file)
 			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath);
 
-		console.info(config.app.prefix, 'updated', path.join(file.relativeDir, file.base));
+		console.info(config.app.prefix, 'updated'.cyan, path.join(file.relativeDir, file.base));
 		hash.updateBundle();
 	});
 
@@ -144,7 +145,7 @@ watcher.on('ready', () => {
 		if (!file)
 			return console.error(config.app.prefix, 'Something went wrong while removing: '.red, filepath);
 
-		console.info(config.app.prefix, 'removed', path.join(file.relativeDir, file.base));
+		console.info(config.app.prefix, 'removed'.red, path.join(file.relativeDir, file.base));
 		hash.updateBundle();
 	});
 
