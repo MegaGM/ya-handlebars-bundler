@@ -183,7 +183,7 @@ module.exports = class Hash {
 		file.type = file.relativeDir.match(/helpers/i) ?
 			'helpers' : file.relativeDir.match(/partials/i) ?
 			'partials' : 'templates';
-		file.registerName = path.join(file.relativeDir.replace(/templates\/|partials\/|helpers\//i, ''), file.name);
+		file.registerName = path.join(file.relativeDir.replace(/templates\/?|partials\/?|helpers\/?/i, ''), file.name);
 		return file;
 	}
 
