@@ -1,7 +1,12 @@
 module.exports = {
-	raw: 'raw',
-	compiled: 'compiled',
-	bundle: 'compiled',
-	bundleFilename: 'bundle.js',
-	minify: true
-};
+  entry: {
+    helpers: 'src/client/templates/helpers',
+    partials: 'src/client/templates/partials',
+    templates: 'src/client/templates/templates',
+  },
+  output: {
+    path: 'static/bundles',
+    filename: 'templates.js',
+    minify: true,
+  },
+}

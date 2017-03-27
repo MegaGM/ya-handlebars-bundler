@@ -1,89 +1,90 @@
 #!/usr/bin/env node
 
-'use strict';
+'use strict'
 
 /* ================================================
  * Startup dependencies
  * ===============================================*/
-let cwd = process.cwd(),
-	config = null,
-	fs = require('fs-extra'),
-	colors = require('colors'),
-	path = require('path'),
-	join = path.resolve,
-	packagejson = require(join(__dirname, '../package.json')),
-	appPrefix = 'Handlebars Builder:'.yellow;
+const
+  colors = require('colors'),
+  fs = require('fs-extra'),
+  path = require('path'),
+  resolve = path.resolve
+let
+  cwd = process.cwd(),
+  config = null,
+  configFilename = 'handlebars.config.js',
+  appName = 'Handlebars Builder:'.yellow,
+  packageJson = require(resolve(__dirname, '../package.json'))
 
-/* ================================================
- * Startup checks
- * ===============================================*/
-// is there handlebars.config.js in this directory?
+/**
+ * check if there is ${configFilename} file in cwd
+ */
 try {
-	config = require(join(cwd, './handlebars.config.js'));
+  config = require(resolve(cwd, configFilename))
 } catch (err) {
-	if ('MODULE_NOT_FOUND' === err.code) {
-
-		return console.error(appPrefix, 'There is no', 'handlebars.config.js', 'in this directory!');
-	}
-	return console.error('Unhandled exception O_o'.red, err);
+  if ('MODULE_NOT_FOUND' === err.code)
+    return console.error(`${appName} There is no ${configFilename} in this directory!`)
+  return console.error('Unhandled exception O_o'.red, err)
 }
 
+/**
+ * check and normalize internal app config, which is based on ${configFilename} file
+ */
+global.config = config // make it global to use in hash.js
 
-// normalize config
-(function checkConfig() {
-	// populate some info for internal usage
-	config.name = 'handlebars.config.js';
-	config.path = join(cwd, config.name);
-	config.app = {
-		prefix: appPrefix,
-		isReady: false
-	};
+config.filename = configFilename
+config.filepath = resolve(cwd, config.filename)
+config.appName = appName
+config.appIsReady = false
 
-	// check if something is not present in the config
-	if (!config.raw) config.raw = 'raw';
-	if (!config.compiled) config.compiled = 'compiled';
-	if (!config.bundle) config.bundle = 'compiled';
-	if (!config.bundleFilename) config.bundleFilename = 'bundle';
-	if (void 0 === config.minify) config.minify = true;
-	if (!config.requirejsHandlebars) config.requirejsHandlebars = 'handlebars';
+/**
+ * check and normalize config.entry
+ */
+if (!config.entry ||
+  !config.entry.helpers || !config.entry.partials || !config.entry.templates)
+  return showErrorMessageWithConfigHelp(`config.entry MUST be presented and contain: helpers, partials and teamplates directives!`)
+// resolve abs paths
+config.entry.helpers = resolve(cwd, config.entry.helpers)
+config.entry.partials = resolve(cwd, config.entry.partials)
+config.entry.templates = resolve(cwd, config.entry.templates)
 
-	// resolve abs paths
-	config.raw = join(cwd, config.raw);
-	config.compiled = join(cwd, config.compiled);
-	config.bundle = join(cwd, config.bundle);
+/**
+ * check and normalize config.output
+ */
+if (!config.output ||
+  !config.output.path || !config.output.filename)
+  return showErrorMessageWithConfigHelp(`config.output MUST be presented and contain at least: path and filename directives!`)
 
-	// check bundleFilename
-	if ('.js' !== config.bundleFilename.substr(-3)) {
-		let filename = config.bundleFilename + (config.minify ? '.min' : '') + '.js';
-		config.bundleFilename = filename;
-	}
-	if (-1 !== config.bundleFilename.indexOf('/'))
-		console.error(config.app.prefix, 'option bundleFilename MUST to be a valid filename, not filepath. But you specified:', config.bundleFilename,
-			`\nYou can specify bundle filepath in ${config.name} file`,
-			'\nconfig.bundleFilename has been reverted to default:'.red, 'bundle.js'.cyan);
-})();
+config.output.minify = !!config.output.minify
 
-// create all operating directories just in case
+if ('.js' !== config.output.filename.substr(-3)) {
+  let filename = config.output.filename + (config.output.minify ? '.min' : '') + '.js'
+  config.output.filename = filename
+}
+if (-1 !== config.output.filename.indexOf('/'))
+  return showErrorMessageWithConfigHelp(`config.output.filename MUST be a valid filename, not a filepath, but you specified: ${config.output.filename}`)
+
+config.output.bundleFile = resolve(cwd, config.output.path, config.output.filename)
+
+/**
+ * create all operating directories just in case
+ */
 let shouldExist = [
-	config.bundle,
-	join(config.raw, './helpers'),
-	join(config.raw, './partials'),
-	join(config.raw, './templates'),
-	join(config.compiled, './helpers'),
-	join(config.compiled, './partials'),
-	join(config.compiled, './templates')
-];
+  config.output.path,
+  resolve(config.entry.helpers),
+  resolve(config.entry.partials),
+  resolve(config.entry.templates),
+]
 
 shouldExist.forEach(dir => {
-	try {
-		fs.ensureDirSync(dir);
-	} catch (err) {
-		console.error(config.app.prefix, 'is not able to create directory: '.red, dir);
-		throw err;
-	}
-});
-
-
+  try {
+    fs.ensureDirSync(dir)
+  } catch (err) {
+    console.error(config.appName, 'error when creating directory: '.red, dir)
+    throw err
+  }
+})
 
 /* ================================================
  * Start its job!
@@ -91,78 +92,76 @@ shouldExist.forEach(dir => {
  + setup Watcher
  + on changes: update Hash, bundle entire hash, minify and write
  * ===============================================*/
-let hash = new(require('./hash')),
-	chokidar = require('chokidar');
+let hash = require('./hash'),
+  chokidar = require('chokidar')
 
 let watcherDirs = [
-		config.path,
-		join(config.raw, './helpers'),
-		join(config.raw, './partials'),
-		join(config.raw, './templates')
-	],
-	watcherOptions = {
-		ignored: /[\/\\]\./i
-	};
+    config.filepath,
+    config.entry.helpers,
+    config.entry.partials,
+    config.entry.templates,
+  ],
+  watcherOptions = {
+    ignored: /[\/\\]\./i
+  }
 
-let watcher = chokidar.watch(watcherDirs, watcherOptions);
+let watcher = chokidar.watch(watcherDirs, watcherOptions)
 
 // add files on startup
 watcher.on('add', filepath => {
-	if (filepath === config.path) return;
+  if (filepath === config.filepath) return
 
-	let file = hash.add(filepath);
-	if (!file)
-		return console.error(config.app.prefix, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors!');
+  let file = hash.add(filepath)
+  if (!file)
+    return console.error(config.appName, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors!')
 
-	console.info(config.app.prefix, 'added', path.join(file.relativeDir, file.base));
-	if (config.app.isReady)
-		hash.updateBundle();
-});
+  console.info(config.appName, 'added', path.join(file.relativeDir, file.base))
+  if (config.appIsReady)
+    hash.updateBundle()
+})
 
 watcher.on('ready', () => {
-	config.app.isReady = true;
-	console.info('\n' + config.app.prefix, 'v.'.yellow + packagejson.version.yellow, 'monitoring is active! ^_^');
+  config.appIsReady = true
+  console.info('\n' + config.appName, 'v.'.yellow + packageJson.version.yellow, 'monitoring is active! ^_^')
 
-	// concat entire hash, minify, write to disk
-	hash.updateBundle();
+  // concat entire hash, minify, write to disk
+  hash.updateBundle()
 
-	watcher.on('change', filepath => {
-		if (filepath === config.path)
-			return console.error(config.app.prefix, 'Configuration file has been changed,'.red, 'please restart the application!'.cyan);
+  watcher.on('change', filepath => {
+    if (filepath === config.filepath)
+      return console.error(config.appName, 'Configuration file has been changed,'.red, 'please restart the application!'.cyan)
 
-		let file = hash.update(filepath);
-		if (!file)
-			return console.error(config.app.prefix, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors!');
+    let file = hash.update(filepath)
+    if (!file)
+      return console.error(config.appName, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors!')
 
-		console.info(config.app.prefix, 'updated'.cyan, path.join(file.relativeDir, file.base));
-		hash.updateBundle();
-	});
+    console.info(config.appName, 'updated'.cyan, path.join(file.relativeDir, file.base))
+    hash.updateBundle()
+  })
 
-	watcher.on('unlink', filepath => {
-		if (filepath === config.path)
-			return console.error(config.app.prefix, 'Configuration file has been deleted,'.red, 'please give it back to me :\'('.cyan);
+  watcher.on('unlink', filepath => {
+    if (filepath === config.filepath)
+      return console.error(config.appName, 'Configuration file has been deleted,'.red, 'please give it back to me :\'('.cyan)
 
-		let file = hash.remove(filepath);
-		if (!file)
-			return console.error(config.app.prefix, 'Something went wrong while removing: '.red, filepath, '\nThe file has not been removed due some errors!');
+    let file = hash.remove(filepath)
+    if (!file)
+      return console.error(config.appName, 'Something went wrong while removing: '.red, filepath, '\nThe file has not been removed due some errors!')
 
-		console.info(config.app.prefix, 'removed'.red, path.join(file.relativeDir, file.base));
-		hash.updateBundle();
-	});
+    console.info(config.appName, 'removed'.red, path.join(file.relativeDir, file.base))
+    hash.updateBundle()
+  })
 
-	watcher.on('addDir', dir => {
-		console.info(config.app.prefix, 'added', dir);
-		watcher.add(dir);
-	});
+  watcher.on('addDir', dir => {
+    console.info(config.appName, 'added', dir)
+    watcher.add(dir)
+  })
 
-	watcher.on('unlinkDir', dir => {
-		let path = dir.replace(config.raw, config.compiled);
-		try {
-			fs.removeSync(path);
-		} catch (err) {
-			console.error(config.app.prefix, 'is not able to delete file: ', path, '\n', err);
-		}
-		console.log(config.app.prefix, 'directory has been removed', dir.replace(config.raw, ''));
-		watcher.unwatch(dir);
-	});
-});
+  watcher.on('unlinkDir', dir => {
+    console.log(config.appName, 'directory has been removed', dir.replace(config.raw, ''))
+    watcher.unwatch(dir)
+  })
+})
+
+function showErrorMessageWithConfigHelp(message) {
+  return console.error(config.appName, message)
+}
