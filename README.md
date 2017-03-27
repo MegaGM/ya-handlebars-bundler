@@ -1,3 +1,6 @@
+This ReadMe is obsolete since v2 release (March 27 2017)
+TODO: REWRITE README ENTIRELY FOR BREAKING CHANGES in v2.0.0
+
 # Handlebars bundler
 Ya, yet another, because why not?  
 Actually I'm not the one who likes to reinvent the wheel, but in this particular case the game worth the candle.  
