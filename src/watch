@@ -3,86 +3,104 @@
 'use strict'
 
 /* ================================================
- * Startup dependencies
+ * Meow! :3
  * ===============================================*/
 const
   colors = require('colors'),
   fs = require('fs-extra'),
   path = require('path'),
-  resolve = path.resolve
+  resolve = path.resolve,
+  packageJson = require(resolve(__dirname, '../package.json'))
 let
   cwd = process.cwd(),
-  config = null,
-  configFilename = 'handlebars.config.js',
-  appName = 'Handlebars Builder:'.yellow,
-  packageJson = require(resolve(__dirname, '../package.json'))
+  config = {
+    appName: 'Handlebars Builder:'.yellow,
+    filename: 'handlebars.config.js',
+    filepath: null,
+    appIsReady: false,
+    howto: '\nRead howto: https://github.com/MegaGM/ya-handlebars-bundler#readme',
+    init() {
+      this.filepath = resolve(cwd, this.filename)
+      delete this.init
+      return this
+    },
+  }.init(),
+  howto = config.howto,
+  cc = null // clientConfig
 
 /**
- * check if there is ${configFilename} file in cwd
+ * check if there is ${config.filename} file in cwd
  */
 try {
-  config = require(resolve(cwd, configFilename))
+  cc = require(config.filepath)
 } catch (err) {
   if ('MODULE_NOT_FOUND' === err.code)
-    return console.error(`${appName} There is no ${configFilename} in this directory!`)
-  return console.error('Unhandled exception O_o'.red, err)
+    return showError(`There is no ${config.filename.red} in this directory! ${howto}`)
+
+  showError('Unhandled exception O_o'.red)
+  throw err
 }
 
 /**
- * check and normalize internal app config, which is based on ${configFilename} file
+ * ^,..,^
  */
-global.config = config // make it global to use in hash.js
+global.config = config // to use in hash.js
 
-config.filename = configFilename
-config.filepath = resolve(cwd, config.filename)
-config.appName = appName
-config.appIsReady = false
+{ // clientConfig scope
+  /**
+   * deal with clientConfig.entry
+   */
+  let
+    e = cc.entry,
+    ce = 'config[\'entry\']'.red
+  if (!e)
+    return showError(`${ce} MUST be presented in ${config.filename.red} ${howto}`)
+
+  if (!e.helpers && !e.partials && !e.templates)
+    return showError(`${ce} MUST contain at least one of the props: helpers, partials, teamplates ${howto}`)
+
+  // resolve abs paths
+  e.helpers = e.helpers ? resolve(cwd, e.helpers) : null
+  e.partials = e.partials ? resolve(cwd, e.partials) : null
+  e.templates = e.templates ? resolve(cwd, e.templates) : null
+
+  /**
+   * deal with clientConfig.output
+   */
+  let
+    o = cc.output,
+    co = 'config[\'output\']'.red
+  if (!o)
+    return showError(`${co} MUST be presented in ${config.filename.red} ${howto}`)
+
+  if (!o.path || !o.filename)
+    return showError(`${co} MUST contain: path, filename ${howto}`)
+
+  // filename.js => filename
+  o.filename = o.filename.replace(/\.js$/i, '')
+  // filename => filename[.min].js
+  o.filename = o.filename + (o.minify ? '.min' : '') + '.js'
+
+  o.bundleFilepath = resolve(cwd, o.path, o.filename)
+
+  /**
+   * merge clientConfig into config
+   */
+  config = Object.assign(config, cc)
+} // clientConfig scope
 
 /**
- * check and normalize config.entry
- */
-if (!config.entry)
-  return showErrorMessageWithConfigHelp(`config.entry MUST be presented in ${config.filename}, read howto: https://MEOW`)
-if (!config.entry.helpers && !config.entry.partials && !config.entry.templates)
-  return showErrorMessageWithConfigHelp(`config.entry MUST contain at least one of the props: helpers, partials, teamplates!`)
-// resolve abs paths
-config.entry.helpers = resolve(cwd, config.entry.helpers)
-config.entry.partials = resolve(cwd, config.entry.partials)
-config.entry.templates = resolve(cwd, config.entry.templates)
-
-/**
- * check and normalize config.output
- */
-if (!config.output ||
-  !config.output.path || !config.output.filename)
-  return showErrorMessageWithConfigHelp(`config.output MUST be presented and contain at least: path and filename directives!`)
-
-config.output.minify = !!config.output.minify
-
-if ('.js' !== config.output.filename.substr(-3)) {
-  let filename = config.output.filename + (config.output.minify ? '.min' : '') + '.js'
-  config.output.filename = filename
-}
-if (-1 !== config.output.filename.indexOf('/'))
-  return showErrorMessageWithConfigHelp(`config.output.filename MUST be a valid filename, not a filepath, but you specified: ${config.output.filename}`)
-
-config.output.bundleFile = resolve(cwd, config.output.path, config.output.filename)
-
-/**
- * create all operating directories just in case
+ * create all the directories just in case :D
  */
 let shouldExist = [
   config.output.path,
-  resolve(config.entry.helpers),
-  resolve(config.entry.partials),
-  resolve(config.entry.templates),
 ]
 
 shouldExist.forEach(dir => {
   try {
     fs.ensureDirSync(dir)
   } catch (err) {
-    console.error(config.appName, 'error when creating directory: '.red, dir)
+    showError('error while creating directory: '.red, dir)
     throw err
   }
 })
@@ -93,76 +111,80 @@ shouldExist.forEach(dir => {
  + setup Watcher
  + on changes: update Hash, bundle entire hash, minify and write
  * ===============================================*/
-let hash = require('./hash'),
+const
   chokidar = require('chokidar')
+let
+  hash = require('./hash'),
+  watcherDirs = [config.filepath],
+  watcherOptions = { ignored: /[\/\\]\./i }
 
-let watcherDirs = [
-    config.filepath,
-    config.entry.helpers,
-    config.entry.partials,
-    config.entry.templates,
-  ],
-  watcherOptions = {
-    ignored: /[\/\\]\./i
-  }
+for (let d in config.entry)
+  watcherDirs.push(d)
 
 let watcher = chokidar.watch(watcherDirs, watcherOptions)
 
 // add files on startup
 watcher.on('add', filepath => {
-  if (filepath === config.filepath) return
+  if (filepath === config.filepath) return // ignore handlebars.config.js
 
   let file = hash.add(filepath)
   if (!file)
-    return console.error(config.appName, 'Something went wrong while adding:'.red, '\n' + filepath, '\nThe file has not been added due some errors!')
+    return showError('Something went wrong while adding:'.red + '\n' +
+      filepath + '\nThe file has not been added due to some errors!')
 
-  console.info(config.appName, 'added', path.join(file.relativeDir, file.base))
   if (config.appIsReady)
     hash.updateBundle()
+
+  showInfo('added', path.join(file.relativeDir, file.base))
 })
 
 watcher.on('ready', () => {
   config.appIsReady = true
-  console.info('\n' + config.appName, 'v.'.yellow + packageJson.version.yellow, 'monitoring is active! ^_^')
+  console.info()
+  showInfo('v.'.yellow + packageJson.version.yellow + ' monitoring is active! ^_^')
 
   // concat entire hash, minify, write to disk
   hash.updateBundle()
 
   watcher.on('change', filepath => {
     if (filepath === config.filepath)
-      return console.error(config.appName, 'Configuration file has been changed,'.red, 'please restart the application!'.cyan)
+      return showError(`Configuration file ${config.filename} has been changed, `.red + 'please restart the application!')
 
     let file = hash.update(filepath)
     if (!file)
-      return console.error(config.appName, 'Something went wrong while updating: '.red, filepath, '\nThe file has not been updated due some errors!')
+      return showError('Something went wrong while updating: \n'.red + filepath + '\nThe file has not been updated due some errors!')
 
-    console.info(config.appName, 'updated'.cyan, path.join(file.relativeDir, file.base))
+    showInfo('updated'.cyan + path.join(file.relativeDir, file.base))
     hash.updateBundle()
   })
 
   watcher.on('unlink', filepath => {
     if (filepath === config.filepath)
-      return console.error(config.appName, 'Configuration file has been deleted,'.red, 'please give it back to me :\'('.cyan)
+      return showError('Configuration file has been deleted, '.red + 'please give it back to me :\'('.cyan)
 
     let file = hash.remove(filepath)
     if (!file)
-      return console.error(config.appName, 'Something went wrong while removing: '.red, filepath, '\nThe file has not been removed due some errors!')
+      return showError('Something went wrong while removing: \n'.red + filepath + '\nThe file has not been removed due to some errors!')
 
-    console.info(config.appName, 'removed'.red, path.join(file.relativeDir, file.base))
+    showInfo('removed'.red + path.join(file.relativeDir, file.base))
     hash.updateBundle()
   })
 
   watcher.on('addDir', dir => {
-    console.info(config.appName, 'added', dir)
+    showInfo('added'.yellow, dir)
     watcher.add(dir)
   })
 
   watcher.on('unlinkDir', dir => {
-    console.log(config.appName, 'directory has been removed', dir.replace(config.raw, ''))
+    showInfo('removed'.red + dir.replace(cwd, ''))
     watcher.unwatch(dir)
   })
 })
 
-function showErrorMessageWithConfigHelp(message) {
+function showError(message) {
   return console.error(config.appName, message)
+}
+
+function showInfo(message) {
+  return console.info(config.appName, message)
 }

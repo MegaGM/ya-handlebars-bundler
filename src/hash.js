@@ -1,3 +1,6 @@
+/**
+ * Smoku weedo eureday
+ */
 'use strict'
 
 const
@@ -112,7 +115,7 @@ class Hash {
       return false
     }
 
-    writeFile(config.output.bundleFile, output)
+    writeFile(config.output.bundleFilepath, output)
   }
 
   _wrap(options) {
