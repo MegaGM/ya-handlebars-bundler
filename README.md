@@ -1,133 +1,140 @@
-This ReadMe is obsolete since v2 release (March 27 2017)
-TODO: REWRITE README ENTIRELY FOR BREAKING CHANGES in v2.0.0
+## YA Handlebars Bundler
 
-# Handlebars bundler
-Ya, yet another, because why not?  
-Actually I'm not the one who likes to reinvent the wheel, but in this particular case the game worth the candle.  
-I always wanted a truly simple yet powerfull tool, that would allow me to include Handlebars in any application. Without any changes to the application structure. With just a couple of terminal commands.  
-Just plug Handlebars in, nothing less nothing more. That's why the bundler was created. And I'm proud of it, because it does its job like a charm.
+Ya, yet another, because why not? ![](https://www.messentools.com/images/emoticones/zorrito/www.MessenTools.com-th_Pyong-1.gif)<br>
 
-## It can:
-- **watch** for various file/folder changes
-- **compile** the files to templates, partials and helpers
-- **wrap** compiled files into a compatibility wrapper
+**Handlebars Bundler** is made to be a dead simple replacement for Webpack, when it comes to work with Handlebars templates, partials and helpers. It provides you basically the same functionality as if you would use `Webpack + handlebars-loader`. However, it's abit better and completely standalone. I'm proud of it, because it does its job like a charm. +You don't have to setup any Webpack/Gulp/Grunt/etc to use it.
+
+## Menu
+* ##### [TLDR](#tldr-it-can)
+* ##### [Installation](#installation)
+* ##### [Basic usage](#basic-usage)
+* ##### [Options](#options)
+* ##### [Default config values](#default-config-values)
+* ##### [Examples](#examples)
+
+## TLDR it can:
+- **watch** over all nested, even **dynamically created**, files/folders
+- **cache** all the files in RAM
+- **(re)compile** only what has to be (re)compiled
 - **minify** and **mangle** output
 - **bundle** all the stuff into a single file
 
-Out of the box you'll be able to use all the produced files (individually or as a bundle) in various environments:
+Out of the box you'll be able to use the bundle in various environments, like:
 - **CommonJS**: Node.js, Browserify, Webpack etc
-- **AMD**: RequireJS, Dojo Toolkit, ScriptManJS, Browserify, Webpack etc
+- **AMD**: RequireJS, Dojo Toolkit, ScriptManJS etc
 - **Browsers** without any custom loaders
 
 ## Installation
-`npm install -g ya-handlebars-bundler`  
 
-There is no external dependencies for the bundler itself. However, in order to make the produced files to work, the `Handlebars` library should be included somehow in your application. You already have it, right? If for some reason you still don't have it yet, read [Usage of the output files](#usage-of-the-output-files) below.
+`npm install -g ya-handlebars-bundler`
 
-## Bundler usage
-*Let's assume your application is in: `/www/myapp`*
+**NOTICE:** `handlebars` library (or `handlebars/runtime`) MUST be already included somehow in your application. In browsers it should be included before the bundle file.<br>
+You can find and download latest Handlebars builds at [cdnjs](https://cdnjs.com/libraries/handlebars.js)
+
+## Basic usage
 
 ```sh
-cd /www/myapp
-touch handlebars.config.js # fill the config with some values, then
-watch-handlebars # or `handlebars-watch`, it's just an alias.
+mkdir ~/myapp
+cd ~/myapp
+handlebars-init # easy way to create handlebars.config.js in CWD
+# (*) it will be prefilled with the default values
+# (*) and some dirs: templates/[helpers, partials, templates]
+# (*) will be created and will contain some examples
+vim handlebars.config.js # now it's time to edit the config
+handlebars-watch # or `watch-handlebars`, it's just an alias.
 ```
+**NOTICE:** It's recommended to run as background task `handlebars-watch &`
 
+## Options
 
-# Configuration
-Configuration file should be called `handlebars.config.js`. Here you can see the default values:
+Configuration file MUST be called `handlebars.config.js`.
+#### Default config values:
 
-```js
+```javascript
 module.exports = {
-		// relative or absolute path for a directory with raw templates, partials and helpers
-    raw: 'raw',
-		// relative or absolute path for a directory for compiled templates, partials and helpers
-    compiled: 'compiled',
-		// relative or absolute path for a directory where a bundle will be created
-		bundle: 'compiled',
-		// filename base for the bundle file
-		bundleFilename: 'bundle', // => it will resolved to `bundle.js` or `bundle.min.js`
-		// should all the output files be mangled and minified?
-    minify: true // => `.min` suffix will be added to the files
-};
+  entry: {
+    helpers: 'templates/helpers',
+    partials: 'templates/partials',
+    templates: 'templates/templates',
+  },
+  output: {
+    path: './', // the CWD
+    filename: 'handlebars.bundle.js',
+    minify: false, // if true, .js will be replaced with .min.js
+    // (*) as well as output will be minified and mangled
+  },
+  options: {
+    verbose: true, // if false, less info in stdout
+    // (*) stderr stream is always at its full power
+  },
+}
 ```
-You can see more information about configuration options below at [Options](#options)
 
-With this particular config **the bundler will:**
-- **watch** over  
-`/www/myapp/raw/templates`  
-`/www/myapp/raw/partials`  
-`/www/myapp/raw/helpers`
-- **compile**, **wrap**, **mangle** and **minify** individual files into  
-`/www/myapp/compiled/templates`  
-`/www/myapp/compiled/partials`  
-`/www/myapp/compiled/helpers`
-- **bundle** all the stuff into  
-`/www/myapp/compiled/bundle.min.js`
+#### With the default config **the bundler will:**
 
-All the output files will be ready to use in the all claimed environments.
+- **watch** over<br>
+  `~/myapp/helpers`<br>
+  `~/myapp/partials`<br>
+  `~/myapp/templates`<br>
 
+- **compile** and **bundle** all the stuff on the fly into<br>
+  `~/myapp/handlebars.bundle.js`
 
-## Usage of the output files
-1. Include `Handlebars` or `Handlebars.runtime` library in your application
-2. Include a compiled template, patrial or a helper, or just a single bundle file instead
-3. That's it!
+# Examples:
 
-You can easily find and download latest Handlebars builds at [cdnjs](https://cdnjs.com/libraries/handlebars.js)
-#### Examples:
-```js
-/* ================================================
- * Of course you can require individual compiled files, but that's tedious.
- * It's much simplier to include the whole bundle.
- * All the templates, partials and helpers will be awailable right away
- * ===============================================*/
+**NOTICE:** Consider, please, that `Handlebars` is Capitalized everywhere.
+
+## Handlebars Template Referencing
+```handlebars
+{{> nes/ted/kitty }} # nested partials
+{{#capitalize message myProp="true"}}{{/capitalize}} # helpers
 ```
-##### Node.js
-`$ npm install --save handlebars`  
+
+
+## Handlebars Helper example
+```javascript
+// usage: {{#capitalize message myProp="true"}}{{/capitalize}}
+Handlebars.registerHelper('capitalize', (context, options) => {
+  // context === message
+  let myProp = options.hash.myProp
+  return `you can declare multiple helpers per file, I don't do that though`
+})
+```
+
+## Node.js
+```sh
+npm install --save handlebars
+```
 then in `anyfile.js`
-```js
-let Handlebars = require('handlebars');
-require('./compiled/bundle.min.js'); // or without .js or without .min.js
 
-let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
-/* ================================================
- * Use templates as usual in Handlebars
- * ===============================================*/
-let html = Handlebars.templates.kittens(data);
+```javascript
+const Handlebars = require('handlebars')
+require('./handlebars.bundle.js') // That's it!
+/**
+ * Now you're free to use templates, partials and helpers
+ * as you usually do
+ */
+const html = Handlebars.templates.kittens({})
 // or
-let html = Handlebars.templates['kittens'](data);
+const html = Handlebars.templates['kittens']({})
+// or let's say we have nested file `~/myapp/templates/partials/nes/ted/kitty.hbs`
+const html = Handlebars.partials['nes/ted/kitty']({})
 ```
 
-##### RequireJS
-```js
+## RequireJS
+```javascript
 // Runtime build will be enough, you don't really need the full Handlebars anymore
-require(['handlebars.runtime.amd.min.js', './compiled/bundle.min'], function (Handlebars) {
-	let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
-	/* ================================================
-	 * Use templates as usual in Handlebars
-	 * ===============================================*/
-	var html = Handlebars.templates.kittens(data);
-	// or
-	var html = Handlebars.templates['kittens'](data);
+require(['handlebars.runtime.amd.min.js', './handlebars.bundle.js'], Handlebars => {
+  // the same as for Node.js
 });
 ```
 
-##### Browsers
+## Browsers
 ```html
 <!-- Runtime build will be enough, you don't really need the full Handlebars anymore -->
-<script src="handlebars.runtime-v4.0.5.js"></script>
-<script src="compiled/bundle.min.js"></script>
+<script src="handlebars.runtime-v4.0.11.min.js"></script>
+<script src="handlebars.bundle.js"></script>
 <script>
-	let data = {name: 'Meowsie', color: 'white', says: 'meow!'};
-	/* ================================================
-	 * Use templates as usual in Handlebars
-	 * ===============================================*/
-	var html = Handlebars.templates.kittens(data);
-	// or
-	var html = Handlebars.templates['kittens'](data);
+  // the same as for Node.js
 </script>
 ```
-
-
-## TODO
-- Make ReadMe :D

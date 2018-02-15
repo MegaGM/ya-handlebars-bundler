@@ -1,25 +1,36 @@
 #!/usr/bin/env node
 
-'use strict'
-
 /* ================================================
  * Meow! :3
  * ===============================================*/
+'use strict'
 const
   colors = require('colors'),
   fs = require('fs-extra'),
   path = require('path'),
+  ora = require('ora'),
   resolve = path.resolve,
-  packageJson = require(resolve(__dirname, '../package.json'))
+  packageJson = require(resolve(__dirname, '../package.json')),
+  {
+    readFile,
+    writeFile,
+    removeFile,
+    showInfo,
+    showError,
+    singular,
+    getFileStats,
+  } = require('./helpers')
 let
   cwd = process.cwd(),
   config = {
-    appName: 'Handlebars Builder:'.yellow,
+    appName: 'Handlebars:'.yellow,
     filename: 'handlebars.config.js',
     filepath: null,
     appIsReady: false,
     howto: '\nRead howto: https://github.com/MegaGM/ya-handlebars-bundler#readme',
+    spinner: ora(),
     init() {
+      this.spinner.start('Loading...')
       this.filepath = resolve(cwd, this.filename)
       delete this.init
       return this
@@ -45,6 +56,8 @@ try {
  * ^,..,^
  */
 global.config = config // to use in hash.js
+global.spinner = config.spinner
+global.VERBOSE = false
 
 { // clientConfig scope
   /**
@@ -52,7 +65,7 @@ global.config = config // to use in hash.js
    */
   let
     e = cc.entry,
-    ce = 'config[\'entry\']'.red
+    ce = `config['entry']`.red
   if (!e)
     return showError(`${ce} MUST be presented in ${config.filename.red} ${howto}`)
 
@@ -60,28 +73,34 @@ global.config = config // to use in hash.js
     return showError(`${ce} MUST contain at least one of the props: helpers, partials, teamplates ${howto}`)
 
   // resolve abs paths
-  e.helpers = e.helpers ? resolve(cwd, e.helpers) : null
-  e.partials = e.partials ? resolve(cwd, e.partials) : null
-  e.templates = e.templates ? resolve(cwd, e.templates) : null
+  e.helpers = e.helpers ? resolve(cwd, e.helpers) : 'templates/helpers'
+  e.partials = e.partials ? resolve(cwd, e.partials) : 'templates/partials'
+  e.templates = e.templates ? resolve(cwd, e.templates) : 'templates/templates'
 
   /**
    * deal with clientConfig.output
    */
   let
     o = cc.output,
-    co = 'config[\'output\']'.red
+    co = `config['output']`.red
   if (!o)
     return showError(`${co} MUST be presented in ${config.filename.red} ${howto}`)
 
-  if (!o.path || !o.filename)
-    return showError(`${co} MUST contain: path, filename ${howto}`)
+  if (!o.filename)
+    return showError(`${co} MUST contain: filename ${howto}`)
 
   // filename.js => filename
   o.filename = o.filename.replace(/\.js$/i, '')
   // filename => filename[.min].js
   o.filename = o.filename + (o.minify ? '.min' : '') + '.js'
 
-  o.bundleFilepath = resolve(cwd, o.path, o.filename)
+  o.minify = !!o.minify
+  o.bundleFilepath = resolve(cwd, o.path || '', o.filename)
+
+  /**
+   * deal with options
+   */
+  VERBOSE = cc.options && cc.options.verbose
 
   /**
    * merge clientConfig into config
@@ -93,7 +112,7 @@ global.config = config // to use in hash.js
  * create all the directories just in case :D
  */
 let shouldExist = [
-  config.output.path,
+  resolve(cwd, config.output.path || ''),
 ]
 
 shouldExist.forEach(dir => {
@@ -119,11 +138,11 @@ let
   watcherOptions = { ignored: /[\/\\]\./i }
 
 for (let d in config.entry)
-  watcherDirs.push(d)
+  watcherDirs.push(config.entry[d])
 
 let watcher = chokidar.watch(watcherDirs, watcherOptions)
 
-// add files on startup
+// 'add' will be invoked for each new file on startup and then
 watcher.on('add', filepath => {
   if (filepath === config.filepath) return // ignore handlebars.config.js
 
@@ -135,26 +154,32 @@ watcher.on('add', filepath => {
   if (config.appIsReady)
     hash.updateBundle()
 
-  showInfo('added', path.join(file.relativeDir, file.base))
+  VERBOSE && spinner.succeed(`added ${singular(file.type)}: ` + path.join(file.relativeDir, file.name).cyan)
 })
 
 watcher.on('ready', () => {
   config.appIsReady = true
-  console.info()
-  showInfo('v.'.yellow + packageJson.version.yellow + ' monitoring is active! ^_^')
+  VERBOSE && console.info()
+  setTimeout(() => {
+    spinner.succeed('Yet Another Handlebars Bundler ' + 'v.'.yellow + packageJson.version.yellow + ' monitoring is active! ^_^')
+  }, VERBOSE ? 0 : 444)
 
   // concat entire hash, minify, write to disk
   hash.updateBundle()
 
   watcher.on('change', filepath => {
     if (filepath === config.filepath)
-      return showError(`Configuration file ${config.filename} has been changed, `.red + 'please restart the application!')
+      return showError(`Configuration file ${config.filename} has been changed. `.red + 'Please restart the application!')
 
+    // spinner.start('updating')
     let file = hash.update(filepath)
-    if (!file)
+    if (!file) {
+      spinner.fail()
       return showError('Something went wrong while updating: \n'.red + filepath + '\nThe file has not been updated due some errors!')
+    }
 
-    showInfo('updated'.cyan + path.join(file.relativeDir, file.base))
+    // VERBOSE && showInfo(`updated ${singular(file.type)} ` + path.join(file.relativeDir, file.base).cyan)
+    spinner.succeed(`updated ${singular(file.type)}: ` + path.join(file.relativeDir, file.base).cyan)
     hash.updateBundle()
   })
 
@@ -166,25 +191,18 @@ watcher.on('ready', () => {
     if (!file)
       return showError('Something went wrong while removing: \n'.red + filepath + '\nThe file has not been removed due to some errors!')
 
-    showInfo('removed'.red + path.join(file.relativeDir, file.base))
+    spinner.warn('removed ' + path.join(file.relativeDir, file.base).red)
+    // VERBOSE && showInfo('removed ' + path.join(file.relativeDir, file.base).red)
     hash.updateBundle()
   })
 
   watcher.on('addDir', dir => {
-    showInfo('added'.yellow, dir)
     watcher.add(dir)
+    spinner.succeed('added dir ' + dir.yellow)
   })
 
   watcher.on('unlinkDir', dir => {
-    showInfo('removed'.red + dir.replace(cwd, ''))
     watcher.unwatch(dir)
+    spinner.warn('removed dir ' + dir.replace(cwd + '/', '').red)
   })
 })
-
-function showError(message) {
-  return console.error(config.appName, message)
-}
-
-function showInfo(message) {
-  return console.info(config.appName, message)
-}

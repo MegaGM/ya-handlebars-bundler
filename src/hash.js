@@ -1,21 +1,26 @@
 /**
- * Smoku weedo eureday
+ * Smoku weedo eureday.js
  */
 'use strict'
-
 const
-  uglify = require('uglify-js'),
   fs = require('fs-extra'),
   path = require('path'),
-  resolve = path.resolve
+  resolve = path.resolve,
+  ora = require('ora'),
+  prettySize = require('prettysize'),
+  uglify = require('uglify-es'),
+  {
+    readFile,
+    writeFile,
+    removeFile,
+    showInfo,
+    showError,
+    singular,
+    getFileStats,
+  } = require('./helpers')
 let
   cwd = process.cwd(),
   Handlebars = null
-let {
-  readFile,
-  writeFile,
-  removeFile,
-} = require('./helpers')
 
 try {
   Handlebars = require(resolve(cwd, 'node_modules/handlebars'))
@@ -51,13 +56,12 @@ class Hash {
       file.precompiled = 'helpers' === file.type ?
         file.content : Handlebars.precompile(file.content)
     } catch (err) {
-      let message = config.appName + ' Handlebars_Parse_Error in file: ' + file.publicName + file.ext + '\n' + err.message
-      console.error(message)
+      showError('Handlebars_Parse_Error in the file: ' + (file.publicName + file.ext).cyan + '\n' + err.message)
       return false
     }
 
     file.compiled = this._wrap({
-      file: file,
+      file,
       wrapper: this.wrappers[file.type],
       content: file.precompiled
     })
@@ -112,10 +116,21 @@ class Hash {
     try {
       output = config.output.minify ? this._compress(output) : output
     } catch (err) {
+      throw err
       return false
     }
 
-    writeFile(config.output.bundleFilepath, output)
+    if (writeFile(config.output.bundleFilepath, output)) {
+      // showInfo(`updated bundle file: ${config.output.filename.cyan} [${prettySize(getFileStats(config.output.bundleFilepath), true).yellow}] | minify: ${(config.output.minify + '').yellow} | chunks: ${this.countAllChunks.yellow} (helpers: ${this.countHelpers.yellow} partials: ${this.countPartials.yellow} templates: ${this.countTemplates.yellow})\n`)
+      if (VERBOSE)
+        setTimeout(() => {
+          spinner.succeed(`updated bundle: ${config.output.filename.cyan} [${prettySize(getFileStats(config.output.bundleFilepath), true).yellow}] | chunks: ${this.countAllChunks.yellow} (helpers: ${this.countHelpers.yellow} partials: ${this.countPartials.yellow} templates: ${this.countTemplates.yellow})`)
+        }, 0)
+      else
+        setTimeout(() => {
+          spinner.succeed(`updated bundle: ${config.output.filename.cyan} [${prettySize(getFileStats(config.output.bundleFilepath), true).yellow}]`)
+        }, 444)
+    }
   }
 
   _wrap(options) {
@@ -130,12 +145,11 @@ class Hash {
     // 	.replace(/'/gi, '\'')
     // 	.replace(/"/gi, '\"')
     try {
-      return uglify.minify(output, {
-          fromString: true
-        })
+      return uglify.minify(output)
         .code
         .replace(/(\\t){2,}/gi, '')
     } catch (err) {
+      console.error(err)
       let error = new Error('JS_Parse_Error')
       error.code = 'JS_Parse_Error'
       error.message = err.message
@@ -151,11 +165,12 @@ class Hash {
     let templates = Object.keys(this.templates)
       .map(key => this.templates[key].compiled)
 
-    let output = helpers.join('\n') + partials.join('\n') + templates.join('\n')
+    let output = helpers.join('\n') + partials.join('\n') + templates.join('\n') + '\n'
     return output.length ? output : false
   }
 
   _getFileinfo(filepath) {
+    // console.info('\n\n', filepath)
     let file = path.parse(filepath)
     if (!this._filepathCheck(file)) return false
 
@@ -172,7 +187,9 @@ class Hash {
     // filter .gitignore and non-js files
     if (file.base.match(/\.gitignore/i))
       return false
-    if ('.js' === file.ext || '.hbs' === file.ext)
+
+    // TODO: make it to be configurable via handlebars.config.js
+    if (['.js', '.hbs', '.handlebars'].includes(file.ext))
       return true
     return false
   }
@@ -184,6 +201,19 @@ class Hash {
       return 'partials'
     if (file.dir.match(config.entry.templates))
       return 'templates'
+  }
+
+  get countHelpers() {
+    return Object.keys(this.helpers).length + ''
+  }
+  get countPartials() {
+    return Object.keys(this.partials).length + ''
+  }
+  get countTemplates() {
+    return Object.keys(this.templates).length + ''
+  }
+  get countAllChunks() {
+    return parseInt(this.countHelpers) + parseInt(this.countPartials) + parseInt(this.countTemplates) + ''
   }
 }
 

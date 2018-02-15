@@ -1,0 +1,28 @@
+#!/usr/bin/env node
+
+'use strict'
+const
+  colors = require('colors'),
+  fs = require('fs-extra'),
+  path = require('path'),
+  ora = require('ora'),
+  resolve = path.resolve,
+  packageJson = require(resolve(__dirname, '../package.json'))
+let
+  cwd = process.cwd(),
+  spinner = ora('Initializing...'.cyan).start()
+
+try {
+  // copy handlebars.config.js
+  fs.copySync(
+    resolve(__dirname, '../example', 'handlebars.config.js'),
+    resolve(cwd, 'handlebars.config.js'))
+  // copy templates
+  fs.copySync(
+    resolve(__dirname, '../example/templates'),
+    resolve(cwd, 'templates'))
+} catch (err) {
+  spinner.fail('Something went wrong' + err)
+  throw err
+}
+setTimeout(() => { spinner.succeed('Done!' + '\nNow try ' + 'handlebars-watch'.yellow) }, 1488)
