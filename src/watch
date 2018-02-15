@@ -41,9 +41,10 @@ config.appIsReady = false
 /**
  * check and normalize config.entry
  */
-if (!config.entry ||
-  !config.entry.helpers || !config.entry.partials || !config.entry.templates)
-  return showErrorMessageWithConfigHelp(`config.entry MUST be presented and contain: helpers, partials and teamplates directives!`)
+if (!config.entry)
+  return showErrorMessageWithConfigHelp(`config.entry MUST be presented in ${config.filename}, read howto: https://MEOW`)
+if (!config.entry.helpers && !config.entry.partials && !config.entry.templates)
+  return showErrorMessageWithConfigHelp(`config.entry MUST contain at least one of the props: helpers, partials, teamplates!`)
 // resolve abs paths
 config.entry.helpers = resolve(cwd, config.entry.helpers)
 config.entry.partials = resolve(cwd, config.entry.partials)
