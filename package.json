@@ -13,12 +13,9 @@
     "chokidar": "^1.5.2",
     "colors": "^1.1.2",
     "fs-extra": "^0.30.0",
-    "glob": "^7.1.2",
     "handlebars": "^4.0.5",
-    "minimatch": "^3.0.4",
     "ora": "^1.4.0",
     "prettysize": "^1.1.0",
-    "readdirp": "^2.1.0",
     "uglify-es": "^3.3.9"
   },
   "devDependencies": {},
