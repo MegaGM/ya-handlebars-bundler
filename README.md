@@ -5,12 +5,12 @@ Ya, yet another, because why not? ![](https://www.messentools.com/images/emotico
 **Handlebars Bundler** is made to be a dead simple replacement for Webpack, when it comes to work with Handlebars templates, partials and helpers. It provides you basically the same functionality as if you would use `Webpack + handlebars-loader`. However, it's abit better and completely standalone. I'm proud of it, because it does its job like a charm. +You don't have to setup any Webpack/Gulp/Grunt/etc to use it.
 
 ## Menu
-* ##### [TLDR](#tldr-it-can)
-* ##### [Installation](#installation)
-* ##### [Basic usage](#basic-usage)
-* ##### [Options](#options)
-* ##### [Default config values](#default-config-values)
-* ##### [Examples](#examples)
+* [TLDR](#tldr-it-can)
+* [Installation](#installation)
+* [Basic usage](#basic-usage)
+* [Options](#options)
+* [Default config values](#default-config-values)
+* [Examples](#examples)
 
 ## TLDR it can:
 - **watch** over all nested, even **dynamically created**, files/folders
