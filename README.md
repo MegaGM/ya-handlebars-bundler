@@ -38,7 +38,7 @@ mkdir ~/myapp
 cd ~/myapp
 handlebars-init # easy way to create handlebars.config.js in CWD
 # (*) it will be prefilled with the default values
-# (*) and some dirs: templates/[helpers, partials, templates]
+# (*) and some dirs: [helpers, partials, templates]
 # (*) will be created and will contain some examples
 vim handlebars.config.js # now it's time to edit the config
 handlebars-watch # or `watch-handlebars`, it's just an alias.
@@ -53,9 +53,9 @@ Configuration file MUST be called `handlebars.config.js`.
 ```javascript
 module.exports = {
   entry: {
-    helpers: 'templates/helpers',
-    partials: 'templates/partials',
-    templates: 'templates/templates',
+    helpers: 'helpers',
+    partials: 'partials',
+    templates: 'templates',
   },
   output: {
     path: './', // the CWD
